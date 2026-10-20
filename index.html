@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>One device for the house — Can it answer quietly?</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #0b1116;
+      color: #94a3b8;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .font-georgia-bold {
+      font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+      font-weight: 700;
+    }
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: #1e293b;
+      height: 6px;
+      border-radius: 9999px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #34d399;
+      cursor: pointer;
+      transition: transform 0.1s ease, background-color 0.2s ease;
+      box-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+    }
+    input[type=range].hot::-webkit-slider-thumb {
+      background: #f87171;
+      box-shadow: 0 0 10px rgba(248, 113, 113, 0.6);
+    }
+    .device-glow-green {
+      box-shadow: inset 0 0 25px rgba(52, 211, 153, 0.12), 0 0 35px rgba(52, 211, 153, 0.08);
+      border-color: #10b981;
+    }
+    .device-glow-red {
+      box-shadow: inset 0 0 25px rgba(239, 68, 68, 0.18), 0 0 45px rgba(239, 68, 68, 0.15);
+      border-color: #ef4444;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 lg:p-12 flex justify-center items-start">
+  <div class="max-w-4xl w-full">
+    <!-- Header -->
+    <header class="mb-8">
+      <div class="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-2">One device for the house</div>
+      <h1 class="text-3xl sm:text-5xl text-slate-100 font-georgia-bold tracking-tight mb-4 leading-tight">
+        Can the house answer its own devices, quietly?
+      </h1>
+      <p class="text-slate-400 text-base sm:text-lg max-w-2xl leading-relaxed">
+        Same box, two ways to think. One hauls every weight across a wire on every answer. The other leaves every weight where it sits.
+      </p>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="grid grid-cols-1 md:grid-cols-12 gap-8 mb-8">
+      <!-- Left Visualizer Column -->
+      <section class="md:col-span-5 flex flex-col justify-between bg-[#101720]/80 p-6 rounded-2xl border border-slate-800/80">
+        <div class="flex flex-col items-center justify-center my-auto py-8">
+          <div id="deviceChassis" class="w-56 h-28 rounded-2xl border-2 device-glow-green flex flex-col justify-between p-4 transition-all duration-300 relative bg-[#0d141c]">
+            <div class="w-24 h-1.5 bg-slate-800 rounded-full"></div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-500 font-mono tracking-tight">home box</span>
+              <div class="flex items-center gap-1.5">
+                <span id="dot1" class="w-2 h-2 rounded-full bg-slate-700"></span>
+                <span id="dot2" class="w-2 h-2 rounded-full bg-slate-700"></span>
+                <span id="statusLed" class="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
+              </div>
+            </div>
+          </div>
+          <div id="statusHeadline" class="mt-8 text-center text-sm font-medium text-emerald-400 transition-colors">
+            A hand can stay. No fan.
+          </div>
+        </div>
+
+        <!-- Power vs Limit Bars -->
+        <div class="grid grid-cols-2 gap-3 pt-4 border-t border-slate-800/80">
+          <div class="bg-[#151f2b] p-3 rounded-xl border border-slate-800">
+            <div class="flex justify-between text-xs text-slate-400 mb-1">
+              <span>Whole box</span>
+              <span id="boxPowerValue" class="text-slate-100 font-bold">4 W</span>
+            </div>
+            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div id="boxPowerBar" class="h-full bg-emerald-400 transition-all duration-200" style="width: 22%;"></div>
+            </div>
+          </div>
+          <div class="bg-[#151f2b] p-3 rounded-xl border border-slate-800">
+            <div class="flex justify-between text-xs text-slate-400 mb-1">
+              <span>Hand limit</span>
+              <span class="text-slate-100 font-bold">18 W</span>
+            </div>
+            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full bg-slate-600" style="width: 100%;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Controls Column -->
+      <section class="md:col-span-7 flex flex-col justify-between space-y-6">
+        <!-- Architecture Switch -->
+        <div class="space-y-2">
+          <button id="btnModeA" onclick="setMode('A')" class="w-full text-left px-4 py-3 rounded-xl text-xs sm:text-sm font-medium transition-all bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+            Von Neumann / GPU (Weights hauled on every token)
+          </button>
+          <button id="btnModeB" onclick="setMode('B')" class="w-full text-left px-4 py-3 rounded-xl text-xs sm:text-sm font-medium transition-all bg-[#151f2b] text-slate-400 border border-slate-800 hover:text-slate-200">
+            Compute-in-Memory (Weights stay in place)
+          </button>
+        </div>
+
+        <!-- Slider Section -->
+        <div>
+          <div class="flex justify-between items-baseline mb-1">
+            <label for="weightSlider" class="text-sm font-medium text-slate-200">Weights</label>
+            <span id="sliderValueText" class="text-sm font-mono text-emerald-400">80 million</span>
+          </div>
+          <p class="text-xs text-slate-500 mb-4">How big a brain the house is asking for.</p>
+          <input id="weightSlider" type="range" min="0" max="8" step="1" value="0" oninput="onSliderChange(this.value)">
+
+          <!-- 9 Preset Capability Pills -->
+          <div class="grid grid-cols-3 gap-1.5 mt-4">
+            <button onclick="setIndex(0)" class="pill-btn text-[11px] px-2 py-1.5 rounded-lg border text-left truncate transition bg-emerald-500/20 text-emerald-300 border-emerald-500/40">Voice switches {80M}</button>
+            <button onclick="setIndex(1)" class="pill-btn text-[11px] px-2 py-1.5 rounded-lg border text-left truncate transition bg-[#151f2b] text-slate-400 border-slate-800">Doorbell vision {160M}</button>
+            <button onclick="setIndex(2)" class="pill-btn text-[11px] px-2 py-1.5 rounded-lg border text-left truncate transition bg-[#151f2b] text-slate-400 border-slate-800">4-camera watch {320M}</button>
+            <button onclick="setIndex(3)" class="pill-btn text-[11px] px-2 py-1.5 rounded-lg border text-left truncate transition bg-[#151f2b] text-slate-400 border-slate-800">Smart router {640M}</button>
+            <button onclick="setIndex(4)" class="pill-btn text-[11px] px-2 py-1.5 rounded-lg border text-left truncate transition bg-[#151f2b] text-slate-400 border-slate-800">Basic assistant {1B}</button>
+            <button onclick="setIndex(5)" class="pill-btn text-[11px] px-2 py-1.5 rounded-lg border text-left truncate transition bg-[#151f2b] text-slate-400 border-slate-800">Room context {1.5B}</button>
+            <button onclick="setIndex(6)" class="pill-btn text-[11px] px-2 py-1.5 rounded-lg border text-left truncate transition bg-[#151f2b] text-slate-400 border-slate-800">Family tutor {3B}</button>
+            <button onclick="setIndex(7)" class="pill-btn text-[11px] px-2 py-1.5 rounded-lg border text-left truncate transition bg-[#151f2b] text-slate-400 border-slate-800">Whole-home brain {8B}</button>
+            <button onclick="setIndex(8)" class="pill-btn text-[11px] px-2 py-1.5 rounded-lg border text-left truncate transition bg-[#151f2b] text-slate-400 border-slate-800">World engine {100B}</button>
+          </div>
+        </div>
+
+        <!-- Live Capability Card -->
+        <div class="bg-[#121a24] p-4 rounded-xl border border-slate-800/80">
+          <div class="flex items-center justify-between mb-1">
+            <span id="capTitle" class="text-xs font-semibold text-slate-200 uppercase tracking-wider">Voice switches</span>
+            <span id="capWattsBadge" class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">4 W · Silent</span>
+          </div>
+          <p id="capDesc" class="text-xs text-slate-400 leading-relaxed">
+            Spots a wake word, glass breaking, or motion on one camera. No real conversation.
+          </p>
+        </div>
+
+        <!-- 1,000 Days Action Button -->
+        <div>
+          <button onclick="run1000Days()" class="w-full py-3 px-4 rounded-xl font-medium text-sm transition-all bg-slate-200 text-slate-900 hover:bg-white active:scale-[0.99] shadow-sm">
+            Run 1,000 days of use
+          </button>
+          <p class="text-[11px] text-slate-500 text-center mt-2">Press it to test through 1,000 ordinary days of household weather.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Editorial Summary & Two Data Cards -->
+    <section class="bg-[#101720]/80 p-6 sm:p-8 rounded-2xl border border-slate-800/80 mb-8 space-y-6">
+      <h2 id="editorialHeadline" class="text-xl sm:text-2xl text-slate-100 font-georgia-bold leading-snug">
+        Quiet. 80 million weights hauled across wires 100 times a second draws 4 W. No fan yet.
+      </h2>
+
+      <!-- Two Data Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-[#151f2b] p-5 rounded-xl border border-slate-800">
+          <div class="text-xs text-slate-400 mb-1">On the chip</div>
+          <div id="metricOnChip" class="text-3xl text-slate-100 font-georgia-bold mb-1">0 million</div>
+          <div id="subOnChip" class="text-xs text-slate-500">In a GPU, 0% stays in compute. All lives in memory.</div>
+        </div>
+        <div class="bg-[#151f2b] p-5 rounded-xl border border-slate-800">
+          <div class="text-xs text-slate-400 mb-1">Moved to the processor</div>
+          <div id="metricMoved" class="text-3xl text-slate-100 font-georgia-bold mb-1">80 million</div>
+          <div id="subMoved" class="text-xs text-slate-500">Hauled 100 times a second. About 1.2 W.</div>
+        </div>
+      </div>
+
+      <!-- De-Jargonized Explanation -->
+      <p id="plainExplanation" class="text-xs text-slate-400 leading-relaxed border-t border-slate-800/80 pt-4">
+        <span id="fanRiskLead" class="text-emerald-400 font-medium">Chance of a day that needs a fan: 0%.</span>
+        A hand left on this 22 × 14 × 4.5 cm box can stay comfortably until the outside touches 48°C. In normal 25°C room air, still air can carry away about 18 watts before the shell hits that limit. In a standard computer chip, the actual math uses almost no power, but dragging millions of memories across copper wires over and over turns into pure heat. At 1 billion memories, the wires alone push the box right onto the 18-watt line.
+      </p>
+    </section>
+
+    <!-- 5-Card Plain-English Telemetry Footer -->
+    <section class="space-y-3">
+      <div class="text-[11px] font-mono tracking-wider text-slate-500 uppercase flex justify-between items-center">
+        <span>Where the power goes (at 100 answers a second)</span>
+        <span id="telemetryModeTag" class="text-slate-400">Mode: Standard Chip</span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div class="bg-[#101720] p-3 rounded-xl border border-slate-800">
+          <div class="text-[11px] text-slate-500 mb-1">Answer speed</div>
+          <div id="telemetrySpeed" class="text-base text-slate-100 font-mono font-bold">100 / sec</div>
+          <div class="text-[10px] text-slate-600 mt-0.5">instant response</div>
+        </div>
+        <div class="bg-[#101720] p-3 rounded-xl border border-slate-800">
+          <div class="text-[11px] text-slate-500 mb-1">Traffic on wires</div>
+          <div id="telemetryTraffic" class="text-base text-slate-100 font-mono font-bold">4.0 GB/s</div>
+          <div id="telemetryTrafficSub" class="text-[10px] text-slate-600 mt-0.5">pulled over copper</div>
+        </div>
+        <div class="bg-[#101720] p-3 rounded-xl border border-slate-800">
+          <div class="text-[11px] text-slate-500 mb-1">Actual math</div>
+          <div id="telemetryMath" class="text-base text-slate-100 font-mono font-bold">0.00 W</div>
+          <div class="text-[10px] text-slate-600 mt-0.5">the thinking itself</div>
+        </div>
+        <div class="bg-[#101720] p-3 rounded-xl border border-slate-800">
+          <div class="text-[11px] text-slate-500 mb-1">Moving data</div>
+          <div id="telemetryMoving" class="text-base text-slate-100 font-mono font-bold">1.20 W</div>
+          <div id="telemetryMovingSub" class="text-[10px] text-slate-600 mt-0.5">wire haul penalty</div>
+        </div>
+        <div class="bg-[#101720] p-3 rounded-xl border border-slate-800 col-span-2 sm:col-span-1">
+          <div class="text-[11px] text-slate-500 mb-1">Box surface (25°C room)</div>
+          <div id="telemetrySurface" class="text-base text-emerald-400 font-mono font-bold">30°C</div>
+          <div class="text-[10px] text-slate-600 mt-0.5">Limit: 48°C (18 W)</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const STOPS = [
+      { name: "Voice switches", weights: 80e6, label: "80 million", fullTitle: "Wake-word & reflex switches {80M}", desc: "Spots a wake word, glass breaking, or motion on one camera. No real conversation." },
+      { name: "Doorbell vision", weights: 160e6, label: "160 million", fullTitle: "Single-room speech & face ID {160M}", desc: "Recognizes family faces at the front door and transcribes clear voice commands." },
+      { name: "4-camera watch", weights: 320e6, label: "320 million", fullTitle: "Multi-camera safety watch {320M}", desc: "Tracks packages, pets, and falls across four rooms at once without sending video to the cloud." },
+      { name: "Smart router", weights: 640e6, label: "640 million", fullTitle: "Natural command router {640M}", desc: "Understands loose phrasing ('make the room cozy') and coordinates lights, heating, and blinds." },
+      { name: "Basic assistant", weights: 1e9, label: "1 billion", fullTitle: "Basic Q&A & schedule helper {1B}", desc: "Summarizes texts, manages calendars, and answers simple questions—like a local Siri." },
+      { name: "Room context", weights: 1.5e9, label: "1.5 billion", fullTitle: "Multi-room memory & routines {1.5B}", desc: "Follows a conversation as you walk between rooms and remembers household habits." },
+      { name: "Family tutor", weights: 3e9, label: "3 billion", fullTitle: "Private family tutor & scribe {3B}", desc: "Helps kids with homework, drafts emails, and searches private family taxes and medical records." },
+      { name: "Whole-home brain", weights: 8e9, label: "8 billion", fullTitle: "Autonomous home intelligence {8B}", desc: "Reasons across live video, audio, and household state at once—anticipating needs before you ask." },
+      { name: "World engine", weights: 100e9, label: "100 billion", fullTitle: "Sovereign polymath & spatial engine {100B}", desc: "Deep reasoning, continuous 24/7 whole-house perception, and real-time 3D/spatial world generation." }
+    ];
+
+    let currentMode = 'A'; // 'A' = GPU, 'B' = CIM
+    let currentIndex = 0;
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('btnModeA').className = mode === 'A'
+        ? "w-full text-left px-4 py-3 rounded-xl text-xs sm:text-sm font-medium transition-all bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+        : "w-full text-left px-4 py-3 rounded-xl text-xs sm:text-sm font-medium transition-all bg-[#151f2b] text-slate-400 border border-slate-800 hover:text-slate-200";
+
+      document.getElementById('btnModeB').className = mode === 'B'
+        ? "w-full text-left px-4 py-3 rounded-xl text-xs sm:text-sm font-medium transition-all bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+        : "w-full text-left px-4 py-3 rounded-xl text-xs sm:text-sm font-medium transition-all bg-[#151f2b] text-slate-400 border border-slate-800 hover:text-slate-200";
+
+      updateUI();
+    }
+
+    function setIndex(idx) {
+      currentIndex = parseInt(idx);
+      document.getElementById('weightSlider').value = currentIndex;
+      updateUI();
+    }
+
+    function onSliderChange(val) {
+      currentIndex = parseInt(val);
+      updateUI();
+    }
+
+    function calculatePhysics(mode, index) {
+      const stop = STOPS[index];
+      const w = stop.weights;
+      let power = 0;
+      let onChip = 0;
+      let moved = 0;
+      let busTrafficGBs = 0;
+      let mathWatts = 0;
+      let wireMovingWatts = 0;
+
+      if (mode === 'A') {
+        // Von Neumann GPU: 100% hauled on every token
+        onChip = 0;
+        moved = w;
+        busTrafficGBs = (w * 0.5 * 100) / 1e9; // 4-bit = 0.5 byte
+        wireMovingWatts = (w / 100e6) * 1.5;
+        mathWatts = ((w * 2 * 100) / 1e12) * 0.02; // tiny compute
+        power = Math.round(3 + wireMovingWatts);
+        if (index === 8) power = 1500; // 100B on GPU impossible in 18W
+      } else {
+        // Compute-in-Memory: All stay in place
+        onChip = w;
+        moved = 0;
+        busTrafficGBs = 0;
+        const activeWeights = Math.min(w, 8e9);
+        mathWatts = ((activeWeights * 2 * 100) / 1e12) * 0.15;
+        const extraWeightsM = Math.max(0, (w - 80e6) / 1e6);
+        wireMovingWatts = Math.min(12.5, (extraWeightsM / 100) * 0.15);
+        power = Math.min(16, Math.round(3 + 1 + wireMovingWatts));
+      }
+
+      const surfaceTemp = Math.min(115, Math.round(25 + (power / 18) * (48 - 25)));
+      const needsFan = power > 18;
+
+      return { power, onChip, moved, busTrafficGBs, mathWatts, wireMovingWatts, surfaceTemp, needsFan };
+    }
+
+    function updateUI() {
+      const stop = STOPS[currentIndex];
+      const phys = calculatePhysics(currentMode, currentIndex);
+
+      // Slider & Pills
+      document.getElementById('sliderValueText').innerText = stop.label;
+      const pills = document.querySelectorAll('.pill-btn');
+      pills.forEach((p, i) => {
+        if (i === currentIndex) {
+          p.className = "pill-btn text-[11px] px-2 py-1.5 rounded-lg border text-left truncate transition bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+        } else {
+          p.className = "pill-btn text-[11px] px-2 py-1.5 rounded-lg border text-left truncate transition bg-[#151f2b] text-slate-400 border-slate-800";
+        }
+      });
+
+      // Capability Card
+      document.getElementById('capTitle').innerText = stop.name;
+      document.getElementById('capDesc').innerText = stop.desc;
+      const badge = document.getElementById('capWattsBadge');
+      if (phys.needsFan) {
+        badge.className = "text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30";
+        badge.innerText = `${phys.power} W · Needs fan`;
+      } else {
+        badge.className = "text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+        badge.innerText = `${phys.power} W · Silent`;
+      }
+
+      // Visualizer Chassis & Bars
+      const chassis = document.getElementById('deviceChassis');
+      const headline = document.getElementById('statusHeadline');
+      const led = document.getElementById('statusLed');
+      const slider = document.getElementById('weightSlider');
+
+      if (phys.needsFan) {
+        chassis.className = "w-56 h-28 rounded-2xl border-2 device-glow-red flex flex-col justify-between p-4 transition-all duration-300 relative bg-[#0d141c]";
+        headline.className = "mt-8 text-center text-sm font-medium text-red-400 transition-colors";
+        headline.innerText = "Too hot to keep a hand on. Needs a fan.";
+        led.className = "w-3 h-3 rounded-full bg-red-400 shadow-[0_0_8px_#f87171]";
+        slider.className = "hot";
+      } else {
+        chassis.className = "w-56 h-28 rounded-2xl border-2 device-glow-green flex flex-col justify-between p-4 transition-all duration-300 relative bg-[#0d141c]";
+        headline.className = "mt-8 text-center text-sm font-medium text-emerald-400 transition-colors";
+        headline.innerText = "A hand can stay. No fan.";
+        led.className = "w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]";
+        slider.className = "";
+      }
+
+      document.getElementById('boxPowerValue').innerText = `${phys.power} W`;
+      const powerPct = Math.min(100, (phys.power / 18) * 100);
+      const bar = document.getElementById('boxPowerBar');
+      bar.style.width = `${powerPct}%`;
+      bar.className = phys.needsFan ? "h-full bg-red-400 transition-all duration-200" : "h-full bg-emerald-400 transition-all duration-200";
+
+      // Editorial Section
+      const h2 = document.getElementById('editorialHeadline');
+      if (currentMode === 'A') {
+        if (currentIndex === 4) {
+          h2.innerText = "Right on the line. 1 billion weights hauled across wires hits 18 W. A hand cannot stay longer, so the box needs a fan.";
+        } else if (phys.needsFan) {
+          h2.innerText = `Too hot. Hauling ${stop.label} weights across copper wires burns ${phys.power} watts. Needs a fan.`;
+        } else {
+          h2.innerText = `Quiet. ${stop.label} weights hauled across wires fits under 18 watts. No fan yet.`;
+        }
+      } else {
+        h2.innerText = `Yes. All ${stop.label} weights stay in their seats. Entire box draws ${phys.power} watts. A hand can stay. No fan.`;
+      }
+
+      // Middle Two Cards
+      if (currentMode === 'A') {
+        document.getElementById('metricOnChip').innerText = "0 million";
+        document.getElementById('subOnChip').innerText = "In a GPU, 0% stays in compute. All lives in memory.";
+        document.getElementById('metricMoved').innerText = stop.label;
+        document.getElementById('subMoved').innerText = `Hauled 100 times a second. Uses ~${phys.wireMovingWatts.toFixed(1)} W.`;
+      } else {
+        document.getElementById('metricOnChip').innerText = stop.label;
+        document.getElementById('subOnChip').innerText = "Thinking happens right where memories sit.";
+        document.getElementById('metricMoved').innerText = "0 million";
+        document.getElementById('subMoved').innerText = "Nothing left the chip. 0 W wasted on wires.";
+      }
+
+      // De-Jargonized Explanation
+      const lead = document.getElementById('fanRiskLead');
+      if (phys.needsFan) {
+        lead.className = "text-red-400 font-medium";
+        lead.innerText = "Chance of a day that needs a fan: 100%.";
+      } else {
+        lead.className = "text-emerald-400 font-medium";
+        lead.innerText = "Chance of a day that needs a fan: 0%.";
+      }
+
+      // 5 Telemetry Cards
+      document.getElementById('telemetryModeTag').innerText = currentMode === 'A' ? "Mode: Standard Chip" : "Mode: In-Memory Chip";
+      document.getElementById('telemetryTraffic').innerText = `${phys.busTrafficGBs.toFixed(1)} GB/s`;
+      document.getElementById('telemetryTrafficSub').innerText = currentMode === 'A' ? "pulled over copper" : "stationary (0 bus traffic)";
+      document.getElementById('telemetryMath').innerText = `${phys.mathWatts.toFixed(2)} W`;
+      document.getElementById('telemetryMoving').innerText = `${phys.wireMovingWatts.toFixed(2)} W`;
+      document.getElementById('telemetryMovingSub').innerText = currentMode === 'A' ? "wire haul penalty" : "internal tile routing";
+      
+      const surf = document.getElementById('telemetrySurface');
+      surf.innerText = `${phys.surfaceTemp}°C`;
+      surf.className = phys.needsFan ? "text-base text-red-400 font-mono font-bold" : "text-base text-emerald-400 font-mono font-bold";
+    }
+
+    function run1000Days() {
+      const phys = calculatePhysics(currentMode, currentIndex);
+      let hotDays = 0;
+      for (let i = 0; i < 1000; i++) {
+        const room = 20 + Math.random() * 12; // 20°C to 32°C
+        const temp = room + (phys.power / 18) * (48 - 25);
+        if (temp >= 48) hotDays++;
+      }
+      const pct = Math.round((hotDays / 1000) * 100);
+      const lead = document.getElementById('fanRiskLead');
+      if (pct > 0) {
+        lead.className = "text-red-400 font-medium";
+        lead.innerText = `Chance of a day that needs a fan: ${pct}%. `;
+      } else {
+        lead.className = "text-emerald-400 font-medium";
+        lead.innerText = `Chance of a day that needs a fan: 0%. `;
+      }
+    }
+
+    // Initialize
+    updateUI();
+  </script>
+</body>
+</html>
